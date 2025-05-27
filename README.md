@@ -17,6 +17,10 @@
 - [CS50's Introduction to Computer Science Certificate](https://iili.io/J7MgKHQ.png)
 - [Google Cybersecurity Professional Certificate](https://coursera.org/share/18a9aabae0178a6aec46071c4e77a139)
 
+<h2>Deprecated:</h2>
+
+- [Old Account](https://github.com/KentFiller)
+
 <!--
 **Kentthou/Kentthou** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
 
