@@ -1,5 +1,3 @@
-<img src="hedgehog.png" alt="GitHub Banner" width="100%" />
-
 # 👋 Hi, I'm Kent!
 
 I code sometimes.
