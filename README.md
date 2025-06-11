@@ -9,8 +9,10 @@ An aspiring **Cybersecurity Enthusiast** and **Part-Time Web Developer**. I love
 - 👯 I’m looking to collaborate on open-source cybersecurity tools or web apps.
 - 📫 Reach me via [#](#).
 -->
-## 🚀 About Me
-- 🌱 Sharpening my cybersecurity expertise, currently focusing on securing web apps, leveraging Python and PowerShell skills.
+  🚀 About Me
+  
+- 🌱 Sharpening my cybersecurity expertise. Currently focusing on securing web applications, getting familiar with React and TailwindCSS, and learning to set up a SIEM on a virtual machine using the ELK stack.
+
 - ⚡ Fun fact: [This is awesome](https://youareawesome.netlify.app/)!
 
 
