@@ -7,6 +7,11 @@ I build Quick, Responsive, and Secure Web Applications with popular languages su
 - Optimizing front-end performance and accessibility, ensuring bugs are found and fixed.
 
 
+## Projects
+
+- [CodeCrafters Shell](https://github.com/Kentthou/codecrafters-shell-c) 
+
+
 ## Skills
 - Front-End: React, TailwindCSS, Vite, JavaScript, TypeScript, HTML5, CSS3
 - Back-End: Flask, Node.js, MySQL, PHP
