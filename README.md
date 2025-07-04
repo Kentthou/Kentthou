@@ -1,4 +1,4 @@
-## Kent | Front-End Developer
+## Kent | Software Engineer
 I build Quick, Responsive, and Secure Web Applications with popular languages such as React, TailwindCSS, JavaScript, and TypeScript. Learned a bit of Cybersecurity, which ensures I write code that’s not just clean but Error-free, reducing vulnerabilities in production. I’ve also worked with Flask, Node.js, and MySQL to deliver full-stack solutions, making me a flexible asset for dynamic teams.
 
 
