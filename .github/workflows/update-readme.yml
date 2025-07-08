@@ -3,10 +3,10 @@ name: Update README with Project Links
 on:
   push:
   schedule:
-    - cron: '0 0 1 * *' # Runs on the first day of every month at midnight UTC
+    - cron: '0 0 1 * *' # Runs on first day of the month Midnight UTC
 
 permissions:
-  contents: write  # for git push
+  contents: write
 
 jobs:
   update-readme:
@@ -26,18 +26,26 @@ jobs:
             exit 0
           fi
 
-      - name: Fetch repositories
+      - name: Fetch project list
         run: |
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/users/${{ github.repository_owner }}/repos?type=public&per_page=100" \
-            | jq -r 'sort_by(.name) | .[] | select(.fork==false and .name != "Kentthou") | "- [\(.name)](\(.html_url))"' > projects.md
+          | jq -r 'sort_by(.name) | .[] | select(.fork==false and .name != "Kentthou") | "- [\(.name)](\(.html_url))"' > new_projects.md
 
-      - name: Update README
+      - name: Replace Projects section in README
         run: |
-          sed -i '/## Projects/,/^$/!d' README.md
-          echo "## Projects" >> README.md
-          cat projects.md >> README.md
-          echo "" >> README.md
+          awk '
+            BEGIN { in_projects = 0 }
+            /^## Projects/ {
+              print
+              print ""
+              while ((getline line < "new_projects.md") > 0) print line
+              in_projects = 1
+              next
+            }
+            in_projects && /^## / { in_projects = 0 }
+            !in_projects || /^## / { print }
+          ' README.md > README.new && mv README.new README.md
 
       - name: Commit changes
         run: |
