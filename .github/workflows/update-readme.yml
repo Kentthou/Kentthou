@@ -3,17 +3,17 @@ name: Update README with Project Links
 on:
   push:
   schedule:
-    - cron: '0 0 1 * *' # Runs first day of every month at midnight UTC
+    - cron: '0 0 1 * *' # Runs on the first day of every month at midnight UTC
 
 jobs:
   update-readme:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
       - name: Check last commit time
-        id: check-inactivity
         run: |
           LAST_COMMIT_TIME=$(git log -1 --format=%ct)
           CURRENT_TIME=$(date +%s)
@@ -24,18 +24,17 @@ jobs:
           fi
 
       - name: Fetch repositories
-        id: fetch-repos
         run: |
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/users/${{ github.repository_owner }}/repos?type=public,per_page=100" \
-            | jq -r 'sort_by(.name) | .[] | select(.fork==false and .name != "Kentthou") | "- [\( .name ) ] ( \( .html_url ) )" '
+            "https://api.github.com/users/${{ github.repository_owner }}/repos?type=public&per_page=100" \
+            | jq -r 'sort_by(.name) | .[] | select(.fork==false and .name != "Kentthou") | "- [\(.name)](\(.html_url))"' > projects.md
 
       - name: Update README
         run: |
           sed -i '/## Projects/,/^$/!d' README.md
-          echo "## Projects\n" >> README.md
+          echo "## Projects" >> README.md
           cat projects.md >> README.md
-          echo "\n" >> README.md
+          echo "" >> README.md
 
       - name: Commit changes
         run: |
