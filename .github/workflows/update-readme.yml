@@ -1,10 +1,14 @@
 name: Update README with Project Links
 
+# This workflow runs:
+# - On every push
+# - And automatically on the 1st of every month at midnight UTC
 on:
   push:
   schedule:
-    - cron: '0 0 1 * *' # Runs on first day of the month Midnight UTC
+    - cron: '0 0 1 * *'
 
+# Give the workflow permission to write to the repo
 permissions:
   contents: write
 
@@ -13,40 +17,69 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Check out the repository so we can read and write files
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # Check if the last commit was less than 24 hours ago
+      # If it was, we skip the update to avoid unnecessary commits
       - name: Check last commit time
         run: |
-          LAST_COMMIT_TIME=$(git log -1 --format=%ct)
-          CURRENT_TIME=$(date +%s)
+          LAST_COMMIT_TIME=$(git log -1 --format=%ct)  # Get the timestamp of the last commit
+          CURRENT_TIME=$(date +%s)                     # Get current timestamp
           TIME_DIFF=$((CURRENT_TIME - LAST_COMMIT_TIME))
-          if [ $TIME_DIFF -lt 86400 ]; then
+          if [ $TIME_DIFF -lt 86400 ]; then            # If difference is less than 1 day
             echo "Last commit was less than 24 hours ago. Skipping update."
             exit 0
           fi
 
-      - name: Fetch project list
+      # Extract all project links from the current README inside the "## Projects" section
+      # This helps us keep custom descriptions we've added manually
+      - name: Extract existing project links
+        run: |
+          awk '/^## Projects/{flag=1; next} /^## /{flag=0} flag' README.md > existing_projects.md
+
+      # Fetch the latest list of our public repos using GitHub's API
+      # We exclude forks and the repo named "Kentthou" (which is assumed to be this repo itself)
+      - name: Fetch list of public repos from GitHub
         run: |
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/users/${{ github.repository_owner }}/repos?type=public&per_page=100" \
-          | jq -r 'sort_by(.name) | .[] | select(.fork==false and .name != "Kentthou") | "- [\(.name)](\(.html_url))"' > new_projects.md
+          | jq -r 'sort_by(.name) | .[] | select(.fork==false and .name != "Kentthou") | "- [\(.name)](\(.html_url))"' > all_projects.md
 
-      - name: Replace Projects section in README
+      # Compare the current README list to the GitHub repo list
+      # We find and save only new projects that aren't already listed
+      - name: Find new projects not in README
         run: |
-          awk '
-            BEGIN { in_projects = 0 }
-            /^## Projects/ {
-              print
-              print ""
-              while ((getline line < "new_projects.md") > 0) print line
-              in_projects = 1
-              next
-            }
-            in_projects && /^## / { in_projects = 0 }
-            !in_projects || /^## / { print }
-          ' README.md > README.new && mv README.new README.md
+          grep -Fxv -f existing_projects.md all_projects.md > new_projects.md || true
 
+      # If we found any new repos, append them to the Projects section
+      # This keeps our existing manual edits intact while still adding fresh links
+      - name: Append new projects to README
+        run: |
+          if [ -s new_projects.md ]; then
+            # Read README line-by-line and inject new links at the end of "## Projects" section
+            awk '
+              /^## Projects/ {
+                print                   # Print the section header
+                in_projects = 1        # We're inside the Projects section
+                next
+              }
+              in_projects && /^## / {
+                in_projects = 0        # We've hit the next section
+              }
+              { print }                # Print every line
+            ' README.md > README.tmp
+
+            echo "" >> README.tmp
+            cat new_projects.md >> README.tmp  # Append new project links
+
+            mv README.tmp README.md
+          else
+            echo "No new projects to add."
+          fi
+
+      # Commit and push changes if any new links were added
       - name: Commit changes
         run: |
           git config user.name "GitHub Actions Bot"
