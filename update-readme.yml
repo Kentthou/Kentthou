@@ -28,7 +28,7 @@ jobs:
         run: |
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/users/${{ github.repository_owner }}/repos?type=public,per_page=100" \
-            | jq -r '.[] | select(.fork==false and .name != "Kentthou") | "- [\( .name ) ] ( \( .html_url ) )" ' > projects.md
+            | jq -r 'sort_by(.name) | .[] | select(.fork==false and .name != "Kentthou") | "- [\( .name ) ] ( \( .html_url ) )" '
 
       - name: Update README
         run: |
