@@ -1,0 +1,46 @@
+name: Update README with Project Links
+
+on:
+  push:
+  schedule:
+    - cron: '0 0 1 * *' # Runs first day of every month at midnight UTC
+
+jobs:
+  update-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Check last commit time
+        id: check-inactivity
+        run: |
+          LAST_COMMIT_TIME=$(git log -1 --format=%ct)
+          CURRENT_TIME=$(date +%s)
+          TIME_DIFF=$((CURRENT_TIME - LAST_COMMIT_TIME))
+          if [ $TIME_DIFF -lt 86400 ]; then
+            echo "Last commit was less than 24 hours ago. Skipping update."
+            exit 0
+          fi
+
+      - name: Fetch repositories
+        id: fetch-repos
+        run: |
+          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            "https://api.github.com/users/${{ github.repository_owner }}/repos?type=public,per_page=100" \
+            | jq -r 'sort_by(.name) | .[] | select(.fork==false and .name != "Kentthou") | "- [\( .name ) ] ( \( .html_url ) )" '
+
+      - name: Update README
+        run: |
+          sed -i '/## Projects/,/^$/!d' README.md
+          echo "## Projects\n" >> README.md
+          cat projects.md >> README.md
+          echo "\n" >> README.md
+
+      - name: Commit changes
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git add README.md
+          git commit -m "Update project links in README" || echo "No changes to commit"
+          git push
