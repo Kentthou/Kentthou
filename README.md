@@ -22,13 +22,6 @@ I build Quick, Responsive, and Secure Web Applications with popular languages su
 - [Vertically Scrolling React Landing Page](https://github.com/Kentthou/react_landing_page)
 
 
-## Skills
-- **Front-End:** React, TailwindCSS, Vite, JavaScript, TypeScript, HTML5, CSS3  
-- **Back-End:** Flask, Node.js, MySQL, PHP  
-- **Cybersecurity:** OWASP principles, secure API design, Azure for SIEM  
-- **Tools:** Git, Linux, PowerShell, Azure, NPM
-
-
 ## 📄 Certifications
 - [CS50's Introduction to Computer Science Certificate](https://iili.io/J7MgKHQ.png)  
 - [Google Cybersecurity Professional Certificate](https://coursera.org/share/18a9aabae0178a6aec46071c4e77a139)
