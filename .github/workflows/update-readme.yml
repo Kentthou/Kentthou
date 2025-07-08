@@ -1,14 +1,10 @@
 name: Update README with Project Links
 
-# This workflow runs:
-# - On every push
-# - And automatically on the 1st of every month at midnight UTC
 on:
   push:
   schedule:
     - cron: '0 0 1 * *'
 
-# Give the workflow permission to write to the repo
 permissions:
   contents: write
 
@@ -17,69 +13,63 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Check out the repository so we can read and write files
+      # Step 1: Check out the repository so we can read and write files
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Check if the last commit was less than 24 hours ago
-      # If it was, we skip the update to avoid unnecessary commits
+      # Step 2: Skip the job if the last commit was less than 24 hours ago
       - name: Check last commit time
         run: |
-          LAST_COMMIT_TIME=$(git log -1 --format=%ct)  # Get the timestamp of the last commit
-          CURRENT_TIME=$(date +%s)                     # Get current timestamp
+          LAST_COMMIT_TIME=$(git log -1 --format=%ct)
+          CURRENT_TIME=$(date +%s)
           TIME_DIFF=$((CURRENT_TIME - LAST_COMMIT_TIME))
-          if [ $TIME_DIFF -lt 86400 ]; then            # If difference is less than 1 day
+          if [ $TIME_DIFF -lt 86400 ]; then
             echo "Last commit was less than 24 hours ago. Skipping update."
             exit 0
           fi
 
-      # Extract all project links from the current README inside the "## Projects" section
-      # This helps us keep custom descriptions we've added manually
+      # Step 3: Extract current list of project links from the README
       - name: Extract existing project links
         run: |
           awk '/^## Projects/{flag=1; next} /^## /{flag=0} flag' README.md > existing_projects.md
 
-      # Fetch the latest list of our public repos using GitHub's API
-      # We exclude forks and the repo named "Kentthou" (which is assumed to be this repo itself)
+      # Step 4: Fetch the full list of public repositories
       - name: Fetch list of public repos from GitHub
         run: |
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/users/${{ github.repository_owner }}/repos?type=public&per_page=100" \
           | jq -r 'sort_by(.name) | .[] | select(.fork==false and .name != "Kentthou") | "- [\(.name)](\(.html_url))"' > all_projects.md
 
-      # Compare the current README list to the GitHub repo list
-      # We find and save only new projects that aren't already listed
+      # Step 5: Compare new project list against existing ones
       - name: Find new projects not in README
         run: |
           grep -Fxv -f existing_projects.md all_projects.md > new_projects.md || true
 
-      # If we found any new repos, append them to the Projects section
-      # This keeps our existing manual edits intact while still adding fresh links
+      # Step 6: Append new project links at the end of the Projects section
       - name: Append new projects to README
         run: |
           if [ -s new_projects.md ]; then
-            # Read README line-by-line and inject new links at the end of "## Projects" section
             awk '
               /^## Projects/ {
-                print                   # Print the section header
-                in_projects = 1        # We're inside the Projects section
+                print
+                in_projects = 1
                 next
               }
               in_projects && /^## / {
-                in_projects = 0        # We've hit the next section
+                in_projects = 0
               }
-              { print }                # Print every line
+              { print }
             ' README.md > README.tmp
 
             echo "" >> README.tmp
-            cat new_projects.md >> README.tmp  # Append new project links
+            cat new_projects.md >> README.tmp
 
             mv README.tmp README.md
           else
             echo "No new projects to add."
           fi
 
-      # Commit and push changes if any new links were added
+      # Step 7: Commit and push changes if any were made
       - name: Commit changes
         run: |
           git config user.name "GitHub Actions Bot"
