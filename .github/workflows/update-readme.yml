@@ -37,13 +37,15 @@ jobs:
           awk '/^## Projects/{flag=1; next} /^## /{flag=0} flag' README.md > existing_projects.md || true
 
           
-      # Step 4: Fetch top N newest repos excluding the current repo itself
-      - name: Fetch top N public repos from GitHub
+      # Step 4: Fetch top N newest repos excluding the main repo itself
+      - name: Fetch top N newest repos excluding the current repo itself
         run: |
+          REPO_NAME="${{ github.repository#*/ }}"
+          echo "Current repo name to exclude: $REPO_NAME"
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/users/${{ github.repository_owner }}/repos?type=public&per_page=100&sort=updated" \
-          | jq -r --arg repo "${{ github.repository }}" --argjson n $TOP_N \
-            'sort_by(.updated_at) | reverse | .[:$n][] | select(.fork==false and .name != $repo) | "- [\(.name)](\(.html_url))"' > fetched_projects.md
+          | jq -r --arg repo "$REPO_NAME" --argjson n $TOP_N \
+            'sort_by(.updated_at) | reverse | map(select(.fork == false and .name != $repo)) | .[:$n][] | "- [\(.name)](\(.html_url))"' > fetched_projects.md
 
           echo "Fetched projects:"
           cat fetched_projects.md
