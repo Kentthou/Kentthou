@@ -15,12 +15,11 @@ I build Quick, Responsive, and Secure Web Applications with popular languages su
 
 ## Projects
 
-- [Next.js Banking App with Finance Dashboard](https://github.com/Kentthou/banking-nextjs)
-- [Flask QR Code Generator Web App](https://github.com/Kentthou/qr-code-generator)
 - [3D Portfolio Landing Page (React + Tailwind)](https://github.com/Kentthou/react-3d-page)
-- [Interactive Hexagon Grid Background (React)](https://github.com/Kentthou/react-hexgrid)
 - [Animated Scroll-Based Landing Page (React + TypeScript)](https://github.com/Kentthou/react-landing-page)
-
+- [Flask QR Code Generator Web App](https://github.com/Kentthou/qr-code-generator)
+- [Interactive Hexagon Grid Background (React)](https://github.com/Kentthou/react-hexgrid)
+- [Next.js Banking App with Finance Dashboard](https://github.com/Kentthou/banking-nextjs)
 
 ## 📄 Certifications
 - [CS50's Introduction to Computer Science Certificate](https://iili.io/J7MgKHQ.png)  
