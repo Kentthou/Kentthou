@@ -15,11 +15,6 @@ I build Quick, Responsive, and Secure Web Applications with popular languages su
 
 ## Projects
 
-- [QR Code Generator (Flask)](https://github.com/Kentthou/qr-code-generator)
-- [React 3D Page](https://github.com/Kentthou/react-3d-page)
-- [React Hexgrid](https://github.com/Kentthou/react-hexgrid)
-- [React Landing Page](https://github.com/Kentthou/react-landing-page)
-- [travel-planner](https://github.com/Kentthou/travel-planner)
 
 ## 📄 Certifications
 - [CS50's Introduction to Computer Science Certificate](https://iili.io/J7MgKHQ.png)  
