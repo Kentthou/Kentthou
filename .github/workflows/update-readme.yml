@@ -31,7 +31,7 @@ jobs:
       # Step 3: Extract 'Projects' section from README
       - name: Extract existing project links
         run: |
-          awk '/^## Projects/{flag=1; next} /^## /{flag=0} flag' README.md > existing_projects.md
+          awk '/^## Projects/{flag=1; next} /^## /{flag=0} flag' README.md > existing_projects.md || true
 
       # Step 4: Fetch all public repos
       - name: Fetch list of public repos from GitHub
@@ -40,50 +40,28 @@ jobs:
             "https://api.github.com/users/${{ github.repository_owner }}/repos?type=public&per_page=100" \
           | jq -r 'sort_by(.name) | .[] | select(.fork==false and .name != "Kentthou") | "- [\(.name)](\(.html_url))"' > all_projects.md
 
-      # Step 5: Compare URLs, not names
-      - name: Append new projects to README
+      # Step 5: Merge, deduplicate, and sort alphabetically
+      - name: Merge and sort project links
         run: |
-          if [ -s all_projects.md ]; then
-            # Extract existing URLs
-            grep -o 'https://github.com/[^)]*' existing_projects.md > existing_urls.txt
+          # Combine existing + fetched project links (ignore empty files gracefully)
+          cat existing_projects.md all_projects.md 2>/dev/null | grep -v '^\s*$' | sort -fu > sorted_projects.md
 
-            # Extract all URLs from fetched repo list
-            grep -o 'https://github.com/[^)]*' all_projects.md > all_urls.txt
+          # Replace entire Projects section with sorted list
+          awk '
+            BEGIN { in_projects = 0 }
+            /^## Projects/ {
+              print
+              print ""
+              while ((getline line < "sorted_projects.md") > 0) print line
+              close("sorted_projects.md")
+              in_projects = 1
+              next
+            }
+            in_projects && /^## / { in_projects = 0 }
+            !in_projects
+          ' README.md > README.tmp
 
-            # Find only new URLs
-            grep -Fxv -f existing_urls.txt all_urls.txt > new_urls.txt || true
-
-            # Extract full lines of new project links
-            grep -Ff new_urls.txt all_projects.md > new_projects_cleaned.md || true
-
-            if [ -s new_projects_cleaned.md ]; then
-              awk '
-                BEGIN { in_projects = 0 }
-                /^## Projects/ {
-                  print
-                  in_projects = 1
-                  next
-                }
-                in_projects && /^## / {
-                  in_projects = 0
-                }
-                {
-                  print
-                  if (in_projects && !printed_new_projects && /^$/) {
-                    while ((getline line < "new_projects_cleaned.md") > 0) print line
-                    close("new_projects_cleaned.md")
-                    printed_new_projects = 1
-                  }
-                }
-              ' README.md > README.tmp
-
-              mv README.tmp README.md
-            else
-              echo "No new unique project URLs to add."
-            fi
-          else
-            echo "Project list is empty. Skipping."
-          fi
+          mv README.tmp README.md
 
       # Step 6: Commit and push if README changed
       - name: Commit changes
@@ -91,7 +69,7 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           git add README.md
-          git commit -m "Update project links in README" || echo "No changes to commit"
+          git commit -m "Alphabetically update project links in README" || echo "No changes to commit"
           git push
 
       # Step 7: Clean up temp files
