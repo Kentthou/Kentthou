@@ -14,8 +14,6 @@ I build Quick, Responsive, and Secure Web Applications with popular languages su
 
 
 ## Projects
-
-- [Kentthou](https://github.com/Kentthou/Kentthou)
 - [QR Code Generator (Flask)](https://github.com/Kentthou/qr-code-generator)
 - [React 3D Page](https://github.com/Kentthou/react-3d-page)
 - [React Hexgrid](https://github.com/Kentthou/react-hexgrid)
