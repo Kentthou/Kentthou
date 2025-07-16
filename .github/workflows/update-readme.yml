@@ -31,53 +31,53 @@ jobs:
             exit 0
           fi
 
-      # Step 3: Extract existing project links (keeps your custom display names)
+      # Step 3: Extract existing project links (keep your custom display names)
       - name: Extract existing project links
         run: |
           awk '/^## Projects/{flag=1; next} /^## /{flag=0} flag' README.md > existing_projects.md || true
 
-      # Step 4: Fetch top N most recently updated repos
+      # Step 4: Fetch all public repos sorted by updated desc and select top N excluding forks and your repo itself
       - name: Fetch top N public repos from GitHub
         run: |
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            "https://api.github.com/users/${{ github.repository_owner }}/repos?type=public&per_page=100&sort=updated" \
+            "https://api.github.com/users/${{ github.repository_owner }}/repos?type=public&per_page=100&sort=updated&direction=desc" \
           | jq -r --argjson n $TOP_N \
-            'sort_by(.updated_at) | reverse | .[:$n][] | select(.fork==false and .name != "Kentthou") | "- [\(.name)](\(.html_url))"' > fetched_projects.md
+            'map(select(.fork == false and .name != "Kentthou")) | .[:$n][] | "- [\(.name)](\(.html_url))"' > fetched_projects.md
 
       # Step 5: Merge, deduplicate by URL (keep custom names), filter only top N, and sort alphabetically
       - name: Merge and sort project links cleanly
         run: |
-          # Keep existing preferred names if they already exist
+          # Extract your preferred display names
           awk -F'[()]' '/^- \[.*\]\(.*\)/ { print }' existing_projects.md > preferred_existing.md
 
-          # Combine fetched top N with preferred names
+          # Merge preferred + fetched links
           cat preferred_existing.md fetched_projects.md | grep -v '^\s*$' > merged_all.md
 
-          # Deduplicate by exact URL (preserve first occurrence = preferred name if present)
+          # Deduplicate by URL (preserve first occurrence to keep preferred names)
           awk '{
             match($0, /\(https:\/\/github\.com\/[^)]+\)/, arr)
             url = arr[0]
             if (!seen[url]++) print $0
           }' merged_all.md > deduped.md
 
-          # Only keep URLs that are in the fetched top N list
+          # Keep only URLs from the top N fetched repos
           awk 'NR==FNR { urls[$0]; next } {
             match($0, /\(https:\/\/github\.com\/[^)]+\)/, arr)
             if (arr[0] in urls) print $0
           }' <(awk '{match($0, /\(https:\/\/github\.com\/[^)]+\)/, arr); print arr[0]}' fetched_projects.md) deduped.md > topn_filtered.md
 
-          # Sort alphabetically by display text
+          # Sort alphabetically by display name (case-insensitive)
           sort -f topn_filtered.md > sorted_projects.md
 
-          # Rewrite README with these final top N projects
+          # Replace README '## Projects' section with new list
           awk '
             BEGIN { in_projects=0 }
             /^## Projects/ {
               print
-              print ""    # blank line after header
+              print ""  # blank line after header
               while ((getline line < "sorted_projects.md") > 0) print line
               close("sorted_projects.md")
-              print ""    # blank line before next section
+              print ""  # blank line before next section
               in_projects=1
               next
             }
