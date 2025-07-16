@@ -20,7 +20,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Skip if last commit < 24h ago to avoid too frequent updates
+      # Step 2: Skip if last commit < 24h ago
       - name: Check last commit time
         run: |
           LAST_COMMIT_TIME=$(git log -1 --format=%ct)
@@ -31,14 +31,13 @@ jobs:
             exit 0
           fi
 
-      # Step 3: Extract existing project links from README (to keep custom display names)
+      # Step 3: Extract existing project lines
       - name: Extract existing project links
         run: |
-          # Extract lines between "## Projects" and next section header starting with ##
           awk '/^## Projects/{flag=1; next} /^## /{flag=0} flag' README.md > existing_projects.md || true
 
-      # Step 4: Fetch all public repos, exclude current repo, get top N newest by updated date
-      - name: Fetch top N newest repos excluding the current repo itself
+      # Step 4: Fetch top N newest repos excluding the current repo
+      - name: Fetch top N newest repos
         run: |
           FULL_REPO="${{ github.repository }}"
           REPO_NAME="${FULL_REPO#*/}"
@@ -51,32 +50,45 @@ jobs:
           echo "Fetched top $TOP_N projects:"
           cat fetched_projects.md
 
-      # Step 5: Merge existing custom names with fetched repos; keep only top N; sort alphabetically
-      - name: Merge preferred names + fetched repos, filter top N, sort alphabetically
+      # Step 5: Match only top N URLs to existing custom names
+      - name: Build final project list strictly from top N
         run: |
-          # Extract URLs from fetched repos for filtering
-          awk '{ match($0, /\((https:\/\/github\.com\/[^)]+)\)/, a); print a[1] }' fetched_projects.md > fetched_urls.txt
+          # Extract URLs of the top N repos
+          awk '{ match($0, /\((https:\/\/github\.com\/[^)]+)\)/, a); if(a[1]!="") print a[1] }' fetched_projects.md > fetched_urls.txt
 
-          # Filter existing projects to only keep those present in fetched top N URLs (to drop old projects)
+          # Filter existing projects ONLY for those URLs
           grep -Ff fetched_urls.txt existing_projects.md > preferred_existing_filtered.md || true
 
-          # Combine preferred existing filtered + fetched (for any new repos without custom names)
-          cat preferred_existing_filtered.md fetched_projects.md | grep -v '^\s*$' > merged_all.md
-
-          # Deduplicate by URL, preferring first occurrence (custom names if any)
+          # Create a mapping: url -> custom line
           awk '{
             match($0, /\((https:\/\/github\.com\/[^)]+)\)/, arr)
-            url = arr[1]
-            if (!seen[url]++) print $0
-          }' merged_all.md > deduped.md
+            if(arr[1]!="") map[arr[1]]=$0
+          } END {
+            for(k in map) print k "\t" map[k]
+          }' preferred_existing_filtered.md > custom_map.txt
+
+          # Now build the final list: For each fetched repo (top N),
+          # check if it has a custom name, else use default
+          > final_list.md
+          while IFS= read -r line; do
+            if [[ "$line" =~ \(https:\/\/github\.com\/[^)]+\) ]]; then
+              url=$(echo "$line" | grep -o '(https[^)]*)' | tr -d '()')
+              custom=$(grep -F "$url" custom_map.txt | cut -f2-)
+              if [ -n "$custom" ]; then
+                echo "$custom" >> final_list.md
+              else
+                echo "$line" >> final_list.md
+              fi
+            fi
+          done < fetched_projects.md
 
           # Sort alphabetically by display text (case-insensitive)
-          sort -f deduped.md > sorted_projects.md
+          sort -f final_list.md > sorted_projects.md
 
-          echo "Final project list for README:"
+          echo "Final strictly top N project list:"
           cat sorted_projects.md
 
-          # Replace the "## Projects" section in README with this list
+          # Replace README section
           awk '
             BEGIN { in_projects=0 }
             /^## Projects/ {
@@ -104,6 +116,6 @@ jobs:
           git pull --rebase origin main || true
           git push origin main
 
-      # Step 7: Cleanup temp files
+      # Step 7: Cleanup
       - name: Clean up temporary files
         run: rm -f *.md *.txt
