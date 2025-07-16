@@ -38,26 +38,36 @@ jobs:
         run: |
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/users/${{ github.repository_owner }}/repos?type=public&per_page=100" \
-          | jq -r 'sort_by(.name) | .[] | select(.fork==false and .name != "Kentthou") | "- [\(.name)](\(.html_url))"' > all_projects.md
+          | jq -r '.[] | select(.fork==false and .name != "Kentthou") | "- [\(.name)](\(.html_url))"' > fetched_projects.md
 
-      # Step 5: Merge, deduplicate, and sort alphabetically
-      - name: Merge and sort project links
+      # Step 5: Merge, deduplicate by URL, prefer existing names, sort alphabetically
+      - name: Merge and sort project links cleanly
         run: |
-          # Combine existing + fetched project links (ignore empty files gracefully)
-          cat existing_projects.md all_projects.md 2>/dev/null | grep -v '^\s*$' | sort -fu > sorted_projects.md
+          # Create a map of URL -> preferred line (prefer existing display names)
+          awk -F'[()]' '/^- \[.*\]\(.*\)/ { url=$2; line=$0; existing[url]=line } END { for (k in existing) print existing[k] }' existing_projects.md > preferred_existing.md
 
-          # Replace entire Projects section with sorted list
+          # Combine existing preferred + fetched ones
+          cat preferred_existing.md fetched_projects.md | grep -v '^\s*$' > merged_all.md
+
+          # Deduplicate by URL (keep first occurrence = existing preferred)
+          awk -F'[()]' '!seen[$2]++' merged_all.md > deduped.md
+
+          # Sort alphabetically by display text (case-insensitive)
+          sort -f deduped.md > sorted_projects.md
+
+          # Rewrite README with sorted list + preserve blank line before next header
           awk '
-            BEGIN { in_projects = 0 }
+            BEGIN { in_projects=0 }
             /^## Projects/ {
               print
-              print ""
+              print ""    # always keep a blank line after Projects header
               while ((getline line < "sorted_projects.md") > 0) print line
               close("sorted_projects.md")
-              in_projects = 1
+              print ""    # add a blank line before next section
+              in_projects=1
               next
             }
-            in_projects && /^## / { in_projects = 0 }
+            in_projects && /^## / { in_projects=0 }
             !in_projects
           ' README.md > README.tmp
 
@@ -69,7 +79,7 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           git add README.md
-          git commit -m "Alphabetically update project links in README" || echo "No changes to commit"
+          git commit -m "Alphabetically update and deduplicate project links in README" || echo "No changes to commit"
           git push
 
       # Step 7: Clean up temp files
