@@ -36,16 +36,18 @@ jobs:
         run: |
           awk '/^## Projects/{flag=1; next} /^## /{flag=0} flag' README.md > existing_projects.md || true
 
-      # Step 4: Fetch top N newest repos from GitHub
+          
+      # Step 4: Fetch top N newest repos excluding the current repo itself
       - name: Fetch top N public repos from GitHub
         run: |
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/users/${{ github.repository_owner }}/repos?type=public&per_page=100&sort=updated" \
-          | jq -r --argjson n $TOP_N \
-            'sort_by(.updated_at) | reverse | .[:$n][] | select(.fork==false) | "- [\(.name)](\(.html_url))"' > fetched_projects.md
+          | jq -r --arg repo "${{ github.repository }}" --argjson n $TOP_N \
+            'sort_by(.updated_at) | reverse | .[:$n][] | select(.fork==false and .name != $repo) | "- [\(.name)](\(.html_url))"' > fetched_projects.md
 
           echo "Fetched projects:"
           cat fetched_projects.md
+
 
       # Step 5: Merge preferred names + fetched, filter only top N, sort alphabetically
       - name: Merge and sort project links cleanly
