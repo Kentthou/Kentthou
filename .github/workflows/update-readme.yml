@@ -40,7 +40,8 @@ jobs:
       # Step 4: Fetch top N newest repos excluding the main repo itself
       - name: Fetch top N newest repos excluding the current repo itself
         run: |
-          REPO_NAME="${{ github.repository#*/ }}"
+          FULL_REPO="${{ github.repository }}"
+          REPO_NAME="${FULL_REPO#*/}"
           echo "Current repo name to exclude: $REPO_NAME"
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/users/${{ github.repository_owner }}/repos?type=public&per_page=100&sort=updated" \
