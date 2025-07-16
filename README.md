@@ -23,7 +23,6 @@ I build Quick, Responsive, and Secure Web Applications with popular languages su
 - [React Landing Page](https://github.com/Kentthou/react-landing-page)
 - [Travel Planner](https://github.com/Kentthou/travel-planner)
 
-
 ## 📄 Certifications
 - [CS50's Introduction to Computer Science Certificate](https://iili.io/J7MgKHQ.png)  
 - [Google Cybersecurity Professional Certificate](https://coursera.org/share/18a9aabae0178a6aec46071c4e77a139)
