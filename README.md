@@ -15,6 +15,7 @@ I build Quick, Responsive, and Secure Web Applications with popular languages su
 
 ## Projects
 
+- [travel_website](https://github.com/Kentthou/travel_website)
 - [Codecrafters Shell (C)](https://github.com/Kentthou/codecrafters-shell-c)
 - [QR Code Generator (Flask)](https://github.com/Kentthou/qr_code_gen)
 - [React + Spline 3D Portfolio](https://github.com/Kentthou/react_3d_page)
