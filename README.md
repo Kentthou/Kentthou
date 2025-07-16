@@ -15,6 +15,11 @@ I build Quick, Responsive, and Secure Web Applications with popular languages su
 
 ## Projects
 
+- [banking-nextjs](https://github.com/Kentthou/banking-nextjs)
+- [qr-code-generator](https://github.com/Kentthou/qr-code-generator)
+- [react-3d-page](https://github.com/Kentthou/react-3d-page)
+- [react-hexgrid](https://github.com/Kentthou/react-hexgrid)
+- [react-landing-page](https://github.com/Kentthou/react-landing-page)
 
 ## 📄 Certifications
 - [CS50's Introduction to Computer Science Certificate](https://iili.io/J7MgKHQ.png)  
