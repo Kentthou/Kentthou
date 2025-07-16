@@ -13,7 +13,7 @@ I build Quick, Responsive, and Secure Web Applications with popular languages su
 - Optimizing front-end performance and accessibility, ensuring bugs are found and fixed.
 
 
-## Projects
+## Latest Projects
 
 - [3D Portfolio Landing Page (React + Tailwind)](https://github.com/Kentthou/react-3d-page)
 - [Animated Scroll-Based Landing Page (React + TypeScript)](https://github.com/Kentthou/react-landing-page)
