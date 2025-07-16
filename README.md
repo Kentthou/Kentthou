@@ -15,12 +15,14 @@ I build Quick, Responsive, and Secure Web Applications with popular languages su
 
 ## Projects
 
+- [Banking App (Next.js 14)](https://github.com/Kentthou/banking_nextjs)
 - [Codecrafters Shell (C)](https://github.com/Kentthou/codecrafters-shell-c)
-- [QR Code Generator (Flask)](https://github.com/Kentthou/qr_code_gen)
-- [react_3d_page](https://github.com/Kentthou/react_3d_page)
-- [react_hexgrid](https://github.com/Kentthou/react_hexgrid)
-- [Responsive Travel Landing Page](https://github.com/Kentthou/travel_website)
-- [Vertically Scrolling React Landing Page](https://github.com/Kentthou/react_landing_page)
+- [QR Code Generator (Flask)](https://github.com/Kentthou/qr-code-generator)
+- [React 3D Page](https://github.com/Kentthou/react-3d-page)
+- [React Hexgrid](https://github.com/Kentthou/react-hexgrid)
+- [React Landing Page](https://github.com/Kentthou/react-landing-page)
+- [Travel Planner](https://github.com/Kentthou/travel-planner)
+
 
 ## 📄 Certifications
 - [CS50's Introduction to Computer Science Certificate](https://iili.io/J7MgKHQ.png)  
