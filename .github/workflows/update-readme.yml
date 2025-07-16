@@ -43,14 +43,18 @@ jobs:
       # Step 5: Merge, deduplicate by URL, prefer existing names, sort alphabetically
       - name: Merge and sort project links cleanly
         run: |
-          # Create a map of URL -> preferred line (prefer existing display names)
-          awk -F'[()]' '/^- \[.*\]\(.*\)/ { url=$2; line=$0; existing[url]=line } END { for (k in existing) print existing[k] }' existing_projects.md > preferred_existing.md
+          # Prefer existing display names for same URL
+          awk -F'[()]' '/^- \[.*\]\(.*\)/ { print }' existing_projects.md > preferred_existing.md
 
           # Combine existing preferred + fetched ones
           cat preferred_existing.md fetched_projects.md | grep -v '^\s*$' > merged_all.md
 
-          # Deduplicate by URL (keep first occurrence = existing preferred)
-          awk -F'[()]' '!seen[$2]++' merged_all.md > deduped.md
+          # Deduplicate by exact URL (ignoring display text)
+          awk '{
+            match($0, /\(https:\/\/github\.com\/[^)]+\)/, arr)
+            url = arr[0]
+            if (!seen[url]++) print $0
+          }' merged_all.md > deduped.md
 
           # Sort alphabetically by display text (case-insensitive)
           sort -f deduped.md > sorted_projects.md
