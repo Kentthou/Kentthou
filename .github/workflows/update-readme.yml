@@ -16,11 +16,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Step 1: Checkout repo
+      # 1. Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # Step 2: Skip if last commit < 24h ago
+      # 2. Skip if last commit < 24h ago
       - name: Check last commit time
         run: |
           LAST_COMMIT_TIME=$(git log -1 --format=%ct)
@@ -31,12 +31,12 @@ jobs:
             exit 0
           fi
 
-      # Step 3: Extract existing project lines
+      # 3. Extract existing project lines from README
       - name: Extract existing project links
         run: |
           awk '/^## Projects/{flag=1; next} /^## /{flag=0} flag' README.md > existing_projects.md || true
 
-      # Step 4: Fetch top N newest repos excluding the current repo
+      # 4. Fetch top N newest repos excluding the current repo
       - name: Fetch top N newest repos
         run: |
           FULL_REPO="${{ github.repository }}"
@@ -50,45 +50,59 @@ jobs:
           echo "Fetched top $TOP_N projects:"
           cat fetched_projects.md
 
-      # Step 5: Match only top N URLs to existing custom names
-      - name: Build final project list strictly from top N
+      # 5. Use Python to strictly keep top N repos with custom names if available
+      - name: Merge with Python
         run: |
-          # Extract URLs of the top N repos
-          awk '{ match($0, /\((https:\/\/github\.com\/[^)]+)\)/, a); if(a[1]!="") print a[1] }' fetched_projects.md > fetched_urls.txt
+          python3 <<'PYCODE'
+import re
 
-          # Filter existing projects ONLY for those URLs
-          grep -Ff fetched_urls.txt existing_projects.md > preferred_existing_filtered.md || true
+# Read fetched top N repos
+with open("fetched_projects.md", "r") as f:
+    fetched_lines = [line.strip() for line in f if line.strip()]
 
-          # Create a mapping: url -> custom line
-          awk '{
-            match($0, /\((https:\/\/github\.com\/[^)]+)\)/, arr)
-            if(arr[1]!="") map[arr[1]]=$0
-          } END {
-            for(k in map) print k "\t" map[k]
-          }' preferred_existing_filtered.md > custom_map.txt
+# Extract URL + default line mapping
+fetched = []
+for line in fetched_lines:
+    match = re.search(r"\((https://github\.com/[^)]+)\)", line)
+    if match:
+        fetched.append((match.group(1), line))
 
-          # Now build the final list: For each fetched repo (top N),
-          # check if it has a custom name, else use default
-          > final_list.md
-          while IFS= read -r line; do
-            if [[ "$line" =~ \(https:\/\/github\.com\/[^)]+\) ]]; then
-              url=$(echo "$line" | grep -o '(https[^)]*)' | tr -d '()')
-              custom=$(grep -F "$url" custom_map.txt | cut -f2-)
-              if [ -n "$custom" ]; then
-                echo "$custom" >> final_list.md
-              else
-                echo "$line" >> final_list.md
-              fi
-            fi
-          done < fetched_projects.md
+# Read existing project section
+try:
+    with open("existing_projects.md", "r") as f:
+        existing_lines = [line.strip() for line in f if line.strip()]
+except FileNotFoundError:
+    existing_lines = []
 
-          # Sort alphabetically by display text (case-insensitive)
-          sort -f final_list.md > sorted_projects.md
+# Build URL → custom line mapping from existing README
+existing_map = {}
+for line in existing_lines:
+    match = re.search(r"\((https://github\.com/[^)]+)\)", line)
+    if match:
+        existing_map[match.group(1)] = line  # preserve custom names
 
-          echo "Final strictly top N project list:"
-          cat sorted_projects.md
+# Build final list (only top N repos)
+final_lines = []
+for url, default_line in fetched:
+    if url in existing_map:
+        final_lines.append(existing_map[url])  # keep custom
+    else:
+        final_lines.append(default_line)  # fallback to default
 
-          # Replace README section
+# Sort alphabetically (case-insensitive)
+final_lines.sort(key=lambda x: x.lower())
+
+# Save final list
+with open("sorted_projects.md", "w") as f:
+    f.write("\n".join(final_lines) + "\n")
+
+print("Final strictly top N project list:")
+print("\n".join(final_lines))
+PYCODE
+
+      # 6. Replace README section with new list
+      - name: Update README.md
+        run: |
           awk '
             BEGIN { in_projects=0 }
             /^## Projects/ {
@@ -103,10 +117,9 @@ jobs:
             in_projects && /^## / { in_projects=0 }
             !in_projects
           ' README.md > README.tmp
-
           mv README.tmp README.md
 
-      # Step 6: Commit changes if any
+      # 7. Commit changes if any
       - name: Commit changes
         run: |
           git config user.name "GitHub Actions Bot"
@@ -116,6 +129,6 @@ jobs:
           git pull --rebase origin main || true
           git push origin main
 
-      # Step 7: Cleanup
+      # 8. Cleanup temp files
       - name: Clean up temporary files
-        run: rm -f *.md *.txt
+        run: rm -f *.md
