@@ -8,6 +8,9 @@ on:
 permissions:
   contents: write
 
+env:
+  TOP_N: 5  # Change this number to control how many repos show
+
 jobs:
   update-readme:
     runs-on: ubuntu-latest
@@ -33,20 +36,21 @@ jobs:
         run: |
           awk '/^## Projects/{flag=1; next} /^## /{flag=0} flag' README.md > existing_projects.md || true
 
-      # Step 4: Fetch ONLY top 5 most recently updated repos
-      - name: Fetch top 5 public repos from GitHub
+      # Step 4: Fetch top N most recently updated repos
+      - name: Fetch top N public repos from GitHub
         run: |
           curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/users/${{ github.repository_owner }}/repos?type=public&per_page=100&sort=updated" \
-          | jq -r 'sort_by(.updated_at) | reverse | .[:5][] | select(.fork==false and .name != "Kentthou") | "- [\(.name)](\(.html_url))"' > fetched_projects.md
+          | jq -r --argjson n $TOP_N \
+            'sort_by(.updated_at) | reverse | .[:$n][] | select(.fork==false and .name != "Kentthou") | "- [\(.name)](\(.html_url))"' > fetched_projects.md
 
-      # Step 5: Merge, deduplicate by URL (keep custom names), and sort alphabetically
+      # Step 5: Merge, deduplicate by URL (keep custom names), filter only top N, and sort alphabetically
       - name: Merge and sort project links cleanly
         run: |
           # Keep existing preferred names if they already exist
           awk -F'[()]' '/^- \[.*\]\(.*\)/ { print }' existing_projects.md > preferred_existing.md
 
-          # Combine fetched top 5 with preferred names
+          # Combine fetched top N with preferred names
           cat preferred_existing.md fetched_projects.md | grep -v '^\s*$' > merged_all.md
 
           # Deduplicate by exact URL (preserve first occurrence = preferred name if present)
@@ -56,16 +60,16 @@ jobs:
             if (!seen[url]++) print $0
           }' merged_all.md > deduped.md
 
-          # **ONLY keep URLs that are in the top 5 fetched list**
+          # Only keep URLs that are in the fetched top N list
           awk 'NR==FNR { urls[$0]; next } {
             match($0, /\(https:\/\/github\.com\/[^)]+\)/, arr)
             if (arr[0] in urls) print $0
-          }' <(awk '{match($0, /\(https:\/\/github\.com\/[^)]+\)/, arr); print arr[0]}' fetched_projects.md) deduped.md > top5_filtered.md
+          }' <(awk '{match($0, /\(https:\/\/github\.com\/[^)]+\)/, arr); print arr[0]}' fetched_projects.md) deduped.md > topn_filtered.md
 
           # Sort alphabetically by display text
-          sort -f top5_filtered.md > sorted_projects.md
+          sort -f topn_filtered.md > sorted_projects.md
 
-          # Rewrite README with these final 5
+          # Rewrite README with these final top N projects
           awk '
             BEGIN { in_projects=0 }
             /^## Projects/ {
@@ -73,7 +77,7 @@ jobs:
               print ""    # blank line after header
               while ((getline line < "sorted_projects.md") > 0) print line
               close("sorted_projects.md")
-              print ""    # blank before next section
+              print ""    # blank line before next section
               in_projects=1
               next
             }
@@ -89,10 +93,10 @@ jobs:
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
           git add README.md
-          git commit -m "Update README with top 5 newest project links" || echo "No changes to commit"
+          git commit -m "Update README with top $TOP_N newest project links" || echo "No changes to commit"
           git pull --rebase origin main || true
           git push origin main
 
-      # Step 7: Clean up temp files
+      # Step 7: Clean up temporary files
       - name: Clean up temporary files
         run: rm -f *.md *.txt
