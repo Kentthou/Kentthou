@@ -17,8 +17,8 @@ I build Quick, Responsive, and Secure Web Applications with popular languages su
 
 - [3D Portfolio Landing Page (React + Tailwind)](https://github.com/Kentthou/react-3d-page)
 - [Animated Scroll-Based Landing Page (React + TypeScript)](https://github.com/Kentthou/react-landing-page)
+- [collab-text-editor](https://github.com/Kentthou/collab-text-editor)
 - [Flask QR Code Generator Web App](https://github.com/Kentthou/qr-code-generator)
-- [Interactive Hexagon Grid Background (React)](https://github.com/Kentthou/react-hexgrid)
 - [LGS](https://github.com/Kentthou/LGS)
 
 ## 📄 Certifications
