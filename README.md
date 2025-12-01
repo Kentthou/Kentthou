@@ -19,7 +19,7 @@ I build Quick, Responsive, and Secure Web Applications with popular languages su
 - [Animated Scroll-Based Landing Page (React + TypeScript)](https://github.com/Kentthou/react-landing-page)
 - [collab-text-editor](https://github.com/Kentthou/collab-text-editor)
 - [Flask QR Code Generator Web App](https://github.com/Kentthou/qr-code-generator)
-- [LGS](https://github.com/Kentthou/LGS)
+- [react-hexgrid](https://github.com/Kentthou/react-hexgrid)
 
 ## 📄 Certifications
 - [CS50's Introduction to Computer Science Certificate](https://iili.io/J7MgKHQ.png)  
