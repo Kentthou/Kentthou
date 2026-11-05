@@ -1,5 +1,5 @@
-## Kent | Software Developer
-I build Quick, Responsive, and Secure Web Applications with popular languages such as React, TailwindCSS, JavaScript, and TypeScript.  
+## Kent | IT Student
+I built Quick, Responsive, and Secure Web Applications with popular languages such as React, TailwindCSS, JavaScript, and TypeScript.  
 <br>Learned a bit of Cybersecurity, which ensures I write code that’s generally Error-Free, reducing vulnerabilities in production.  
 <br>Also had some work with Flask, Node.js, and MySQL to deliver full-stack solutions.
 
